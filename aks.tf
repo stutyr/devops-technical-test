@@ -13,7 +13,12 @@
 locals {
   env_resource_name        = "${var.service_name}-${var.service_location}-${var.service_number}"
   env_resource_short_name  = "$${var.service_name}${var.service_short_location}${var.service_number}"
-
+  default_tags = {
+    Service     = var.service_name
+    Environment = "Production"
+    Owner       = "Stuart Tyrrell"
+    Deploy_date = timestamp()
+  }
 }
 
 # --------------------------------------------------------------------------
