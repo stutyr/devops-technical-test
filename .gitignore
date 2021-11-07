@@ -1,2 +1,4 @@
 provider.tf
-.terra*
+.terraform
+.terraform.lock.*
+
