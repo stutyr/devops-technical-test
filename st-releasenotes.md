@@ -20,3 +20,4 @@ The following section details potential improvements as they are found to enable
 - deliver  web site via CDN and HTTPS. will require custom domain plus SSL cert.
 
 - make deployment suitable for multi region.
+
