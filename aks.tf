@@ -7,79 +7,98 @@
 # --------------------------------------------------------------------------
 
 # --------------------------------------------------------------------------
+# Local variable setup
+# --------------------------------------------------------------------------
+
+locals {
+  env_resource_name        = "${var.service_name}-${var.service_location}-${var.service_number}"
+  env_resource_short_name  = "$${var.service_name}${var.service_short_location}${var.service_number}"
+
+}
+
+# --------------------------------------------------------------------------
 # Resource Group setup
 # --------------------------------------------------------------------------
 
-resource "azurerm_resource_group" "delio-merch" {
-  name     = "rg-${var.service_name}-${var.service_location}-${var.service_number}"
-  location = var.service_location
-
-  tags = {
-    Service = "Merchandise"
-    Environment = "Production"
-  }
+resource "azurerm_resource_group" "rg001" {
+  name                 = "rg-${local.env_resource_name}"
+  location             = var.service_location
+  tags                 = "${local.default_tags}"
 }
 
 # --------------------------------------------------------------------------
 # AKS Setup
 # --------------------------------------------------------------------------
 
-resource "azurerm_kubernetes_cluster" "delio-merch" {
-  name                = "aks-${var.service_name}-${var.service_location}-${var.service_number}"
-  location            = azurerm_resource_group.delio-merch.location
-  resource_group_name = azurerm_resource_group.deliomerch.name
-  dns_prefix          = "delio-merchandise"
+resource "azurerm_kubernetes_cluster" "aks001" {
+  name                 = "aks-${local.env_resource_name}"
+  location             = azurerm_resource_group.rg001.location
+  resource_group_name  = azurerm_resource_group.rg001.name
+  dns_prefix           = var.service_name
 
   default_node_pool {
-    name       = "default"
-    node_count = 1
-    vm_size    = "Standard_D2_v2"
+    name                 = "default"
+    node_count           = 1
+    vm_size              = "Standard_D2_v2"
   }
 
   identity {
-    type = "SystemAssigned"
+    type                 = "SystemAssigned"
   }
 
-  tags = {
-    Service = "Merchandise"
-    Environment = "Production"
-  }
+  tags                 = "${local.default_tags}"
 }
 
 output "client_certificate" {
-  value = azurerm_kubernetes_cluster.delio-merch.kube_config.0.client_certificate
+  value                  = azurerm_kubernetes_cluster.aks001.kube_config.0.client_certificate
 }
 
 output "kube_config" {
-  value = azurerm_kubernetes_cluster.delio-merch.kube_config_raw
-
-  sensitive = true
+  value                  = azurerm_kubernetes_cluster.aks001.kube_config_raw
+  sensitive              = true
 }
 
 # --------------------------------------------------------------------------
 # ACR Setup
 # --------------------------------------------------------------------------
 
-resource "azurerm_container_registry" "acr" {
-  name                     = local.container_registry_name
-  resource_group_name      = azurerm_resource_group.rg.name
-  location                 = azurerm_resource_group.rg.location
-  sku                      = "Standard"
-  admin_enabled            = false
+resource "azurerm_container_registry" "acr001" {
+  name                 = "acr-${local.env_resource_name}}"
+  resource_group_name  = azurerm_resource_group.rg001.name
+  location             = azurerm_resource_group.rg001.location
+  sku                  = "Standard"
+  admin_enabled        = true
+  tags                 = "${local.default_tags}"
 }
 
-resource "azurerm_user_assigned_identity" "acr-ident" {
-  resource_group_name  = azurerm_resource_group.delio-merch.name
-  location             = azurerm_resource_group.delio-merch.location
-  name                 = "uai-${var.service_name}-${var.service_location}-${var.service_number}"
+resource "azurerm_user_assigned_identity" "uai001" {
+  name                 = "uai-${local.env_resource_name}"
+  resource_group_name  = azurerm_resource_group.rg001.name
+  location             = azurerm_resource_group.rg001.location
 }
 
 resource "azurerm_role_assignment" "acr-pull" {
-  scope                = data.azurerm_container_registry.delio-acr.id
+  scope                = azurerm_container_registry.acr001.id
   role_definition_name = "acrpull"
-  principal_id         = azurerm_user_assigned_identity.delio-ident.principal_id
+  principal_id         = azurerm_user_assigned_identity.uai001.principal_id
 }
 
 # --------------------------------------------------------------------------
 # Storage Account Setup
 # --------------------------------------------------------------------------
+
+resource "azurerm_storage_account" "static_storage" {
+  name                       = "sa${local.env_resource_short_name}"
+  resource_group_name        = azurerm_resource_group.rg001.name
+  location                   = azurerm_resource_group.rg001.location
+  account_kind               = "StorageV2"
+  account_tier               = "Standard"
+  account_replication_type   = "LRS"
+  enable_https_traffic_only  = true
+
+  static_website {
+    index_document = "index.html"
+  }
+
+  tags                       = "${local.default_tags}"
+}
