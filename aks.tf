@@ -12,7 +12,7 @@
 
 locals {
   env_resource_name        = "${var.service_name}-${var.service_location}-${var.service_number}"
-  env_resource_short_name  = "$${var.service_name}${var.service_short_location}${var.service_number}"
+  env_resource_short_name  = "${var.service_name}${var.service_short_location}${var.service_number}"
   default_tags = {
     Service     = var.service_name
     Environment = "Production"
@@ -68,7 +68,7 @@ output "kube_config" {
 # --------------------------------------------------------------------------
 
 resource "azurerm_container_registry" "acr001" {
-  name                 = "acr-${local.env_resource_name}}"
+  name                 = "acr${local.env_resource_short_name}"
   resource_group_name  = azurerm_resource_group.rg001.name
   location             = azurerm_resource_group.rg001.location
   sku                  = "Standard"
