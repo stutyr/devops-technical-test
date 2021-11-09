@@ -5,6 +5,8 @@
 The code contained within this repository will create a basic one node AKS cluster with an ACR to host the container image and a Storage account to host the static content.  
 
 Currently this is not integrated with a CI/CD pipeline and will require a local terraform installation.  To protect the secrets, the azurerm provider is not included with the code and will need to be defined with the relevant service principal or other details to deploy into an azure subscription
+
+1. Deploy terraform by changing to the terraform folder, and running **terraform init**, then **terraform plan** to confirm the resources it will create before running **terraform apply** to deploy the code
 ## Development steps
 
 - **V0.0.1:** initial step is to create kubernetes cluster plus storage for static hosting.  Azure Container Instances or AWS Fargate were potential for a single container deployment, but requirement specifically asked for Kubernetes cluster.  To enable container deployment a container registry will also be required.
