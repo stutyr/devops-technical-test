@@ -1,4 +1,6 @@
 provider.tf
 .terraform
 .terraform.lock.*
+terraform.tfstate*
+
 
