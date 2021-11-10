@@ -49,19 +49,23 @@ resource "azurerm_kubernetes_cluster" "aks001" {
 
   identity {
     type                 = "SystemAssigned"
+    
   }
 
   tags                 = "${local.default_tags}"
 }
 
-output "client_certificate" {
-  value                  = azurerm_kubernetes_cluster.aks001.kube_config.0.client_certificate
-}
+// output "client_certificate" {
+//   value                  = azurerm_kubernetes_cluster.aks001.kube_config.0.client_certificate
+// }
 
-output "kube_config" {
-  value                  = azurerm_kubernetes_cluster.aks001.kube_config_raw
-  sensitive              = true
-}
+// output "kube_config" {
+//   value                  = azurerm_kubernetes_cluster.aks001.kube_config_raw
+//   sensitive              = true
+// }
+
+
+
 
 # --------------------------------------------------------------------------
 # ACR Setup
@@ -76,17 +80,18 @@ resource "azurerm_container_registry" "acr001" {
   tags                 = "${local.default_tags}"
 }
 
-resource "azurerm_user_assigned_identity" "uai001" {
-  name                 = "uai-${local.env_resource_name}"
-  resource_group_name  = azurerm_resource_group.rg001.name
-  location             = azurerm_resource_group.rg001.location
-}
+// resource "azurerm_user_assigned_identity" "uai001" {
+//   name                 = "uai-${local.env_resource_name}"
+//   resource_group_name  = azurerm_resource_group.rg001.name
+//   location             = azurerm_resource_group.rg001.location
+// }
 
-resource "azurerm_role_assignment" "acr-pull" {
-  scope                = azurerm_container_registry.acr001.id
-  role_definition_name = "acrpull"
-  principal_id         = azurerm_user_assigned_identity.uai001.principal_id
-}
+// resource "azurerm_role_assignment" "acr-user-pull" {
+//   scope                = azurerm_container_registry.acr001.id
+//   role_definition_name = "acrpull"
+//   principal_id         = azurerm_user_assigned_identity.uai001.principal_id
+// }
+
 
 # --------------------------------------------------------------------------
 # Storage Account Setup
@@ -106,4 +111,24 @@ resource "azurerm_storage_account" "static_storage" {
   }
 
   tags                       = "${local.default_tags}"
+}
+
+
+output "web_site_address" {
+  value = azurerm_storage_account.static_storage.primary_web_endpoint
+}
+
+output "container_registry" {
+  value = azurerm_container_registry.acr001.name
+}
+
+output "web_copy_files" {
+  value = "az storage blob upload-batch -s ./web/ -d '$web' --account-name ${azurerm_storage_account.static_storage.name}"
+}
+
+output "aks_login" {
+  value                  = "az aks get-credentials --name ${azurerm_kubernetes_cluster.aks001.name} --resource-group ${azurerm_resource_group.rg001.name}"
+}
+output "aks_attach_acr" {
+  value                  = "az aks update -n ${azurerm_kubernetes_cluster.aks001.name} -g ${azurerm_resource_group.rg001.name} --attach-acr ${azurerm_container_registry.acr001.name}"
 }
