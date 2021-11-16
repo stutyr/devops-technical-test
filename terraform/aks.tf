@@ -24,7 +24,9 @@ locals {
 # --------------------------------------------------------------------------
 # Resource Group setup
 # --------------------------------------------------------------------------
-
+provider "azurerm" {
+  features {} 
+}
 resource "azurerm_resource_group" "rg001" {
   name                 = "rg-${local.env_resource_name}"
   location             = var.service_location
